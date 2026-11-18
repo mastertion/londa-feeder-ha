@@ -78,16 +78,30 @@ name        device_id       category   product      ip            version  onlin
 
 ### 第 2 步 · 装集成
 
-**方式 A · HACS（推荐）**
+仓库地址：**<https://github.com/mastertion/londa-feeder-ha>**
 
-1. HACS → 集成 → 右上角 `⋮` → 自定义仓库
-2. 仓库地址填本仓库地址，类别选 `Integration`
-3. 安装后重启 HA
+**方式 A · HACS 自定义仓库（推荐）**
 
-**方式 B · 手动**
+1. HACS → 集成 → 右上角 `⋮` → **自定义仓库**
+2. 仓库地址填 `https://github.com/mastertion/londa-feeder-ha`
+3. 类别选 `Integration` → 添加
+4. 在 HACS 里搜索「LONDA Feeder」安装（或直接点下载）
+5. 重启 HA
+
+**方式 B · git clone（命令行）**
+
+```bash
+cd /config/custom_components
+git clone https://github.com/mastertion/londa-feeder-ha.git _tmp_londa
+cp -r _tmp_londa/custom_components/londa_feeder ./londa_feeder
+rm -rf _tmp_londa
+```
+
+然后重启 HA。后续更新直接 `git pull` 后再拷贝即可。
+
+**方式 C · 手动 / 离线**
 
 把 `custom_components/londa_feeder` 整个文件夹复制到 HA 的 `/config/custom_components/` 下，重启 HA。
-
 （也可以用仓库根目录的 `londa_feeder.zip` 解压后放进去。）
 
 ### 第 3 步 · 添加设备（扫码 / 手动二选一）

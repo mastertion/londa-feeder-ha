@@ -1,0 +1,101 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "添加喂食器",
+        "description": "扫码添加会自动获取设备 IP 与本地密钥，无需手填。"
+      },
+      "account": {
+        "title": "选择设备",
+        "description": "使用 HA 里已有的涂鸦授权读取设备列表。若这里报错，改用「扫码添加」或「手动填写」。"
+      },
+      "qr": {
+        "title": "输入 User Code",
+        "description": "在 Londa APP 里取 User Code：右下角「我的」→ 右上角设置 ⚙ → 「账号与安全」→ 页面最下方的 **User Code**，原样复制（区分大小写）。",
+        "data": {
+          "user_code": "User Code"
+        }
+      },
+      "qr_scan": {
+        "title": "用 Londa APP 扫码",
+        "description": "用 Londa APP 右上角「+」里的「扫一扫」扫描下面的二维码，并在手机上点确认。**扫完后回到这里点「提交」**。",
+        "data": {
+          "QR": " "
+        }
+      },
+      "qr_pick": {
+        "title": "选择设备",
+        "description": "从账号下的设备里选择要接入的那台。接下来会自动在局域网里定位它的 IP。"
+      },
+      "manual": {
+        "title": "手动填写连接参数",
+        "description": "填写设备的局域网地址和涂鸦本地密钥（localKey）。\n协议版本保持「自动探测」即可，会按 3.5→3.4→3.3→3.1 依次尝试。",
+        "data": {
+          "name": "名称",
+          "address": "设备 IP 地址",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "protocol_version": "协议版本"
+        }
+      },
+      "dp_map": {
+        "title": "指认功能点（DP）",
+        "description": "设备已连通，读到以下 DP：\n{dump}\n\n请指定「投喂触发」DP（写入即出粮），以及可选的「投喂中」状态 DP。"
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接设备，请确认设备在同一个局域网、IP 未被占用",
+      "no_dps": "设备有响应但没有返回任何 DP，可能是蓝牙版设备",
+      "invalid_user_code": "User Code 不正确（{msg} / {code}）。请回 APP 重新复制，注意区分大小写",
+      "qr_not_scanned": "还没读到扫码授权（{msg}）。请用 Londa APP 扫码并在手机上确认后，再点击提交",
+      "cloud_error": "已授权但拉取设备列表失败，请查看日志后重试",
+      "no_devices": "这个账号下没有设备，请先在 Londa APP 里添加喂食器",
+      "no_tuya_entry": "HA 里没有可用的涂鸦授权。请先添加官方 Tuya 集成，或改用「扫码添加」/「手动填写」",
+      "device_not_found": "局域网里没扫到这台设备。请确认设备和 HA 在同一网段、已连上 2.4G WiFi，然后重试",
+      "unknown": "未知错误，详见日志",
+      "required": "此项必填"
+    },
+    "abort": {
+      "already_configured": "该设备已配置"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "调整 DP 映射",
+        "description": "当前设备 DP：\n{dump}"
+      }
+    },
+    "error": {
+      "required": "投喂 DP 必填"
+    }
+  },
+  "entity": {
+    "button": {
+      "feed_now": {
+        "name": "立即投喂"
+      }
+    },
+    "sensor": {
+      "battery": {
+        "name": "备用电池电量"
+      }
+    },
+    "binary_sensor": {
+      "feeding": {
+        "name": "投喂中"
+      },
+      "no_food": {
+        "name": "缺粮"
+      },
+      "jam": {
+        "name": "卡粮"
+      }
+    },
+    "number": {
+      "portions": {
+        "name": "每次投喂份数"
+      }
+    }
+  }
+}

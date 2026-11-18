@@ -1,0 +1,114 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add feeder",
+        "description": "QR setup fetches the device IP and localKey automatically."
+      },
+      "account": {
+        "title": "Pick a device",
+        "description": "Reads devices from the Tuya authorization already stored in Home Assistant. If this fails, use QR or manual setup."
+      },
+      "qr": {
+        "title": "Enter your User Code",
+        "description": "Find it in the Londa app: Me → gear icon → **Account and Security** → **User Code** at the bottom. Copy it exactly (case sensitive).",
+        "data": {
+          "user_code": "User Code"
+        }
+      },
+      "qr_scan": {
+        "title": "Scan with the Londa app",
+        "description": "Scan this QR code with the Londa app (the + button → Scan) and confirm on your phone. Then click **Submit** here."
+      },
+      "qr_pick": {
+        "title": "Pick a device",
+        "description": "Choose the feeder to add. Its LAN address is resolved automatically next."
+      },
+      "manual": {
+        "title": "Enter connection details",
+        "description": "Enter the feeder's LAN address and localKey.\nKeep protocol on \"auto\" — it tries 3.5 → 3.4 → 3.3 → 3.1 in order.",
+        "data": {
+          "name": "Name",
+          "address": "IP address",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "protocol_version": "Protocol version"
+        }
+      },
+      "dp_map": {
+        "title": "Map data points",
+        "description": "Connected. Data points found:\n{dump}\n\nPick the DP that triggers feeding and, optionally, the DP that reports \"feeding in progress\".",
+        "data": {
+          "feed_dp": "Feed trigger DP",
+          "portion_dp": "Portion DP",
+          "feeding_dp": "Feeding-status DP",
+          "battery_dp": "Backup battery DP",
+          "no_food_dp": "Out-of-food DP",
+          "jam_dp": "Jam alarm DP"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the device. Make sure it is on the same LAN.",
+      "no_dps": "Device responded but reported no data points.",
+      "invalid_user_code": "Wrong User Code ({msg} / {code}). Copy it again from the app.",
+      "qr_not_scanned": "No authorization yet ({msg}). Scan with the app and confirm, then submit.",
+      "cloud_error": "Authorized, but fetching the device list failed. Check the logs.",
+      "no_devices": "No devices in this account. Add the feeder in the app first.",
+      "no_tuya_entry": "No Tuya authorization found in Home Assistant. Add the official Tuya integration first, or use QR / manual setup.",
+      "device_not_found": "Device not found on the LAN. Check it is on the same subnet and 2.4 GHz Wi-Fi.",
+      "unknown": "Unknown error, see logs.",
+      "required": "This field is required"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Adjust DP mapping",
+        "description": "Current data points:\n{dump}",
+        "data": {
+          "feed_dp": "Feed trigger DP",
+          "portion_dp": "Portion DP",
+          "feeding_dp": "Feeding-status DP",
+          "battery_dp": "Backup battery DP",
+          "no_food_dp": "Out-of-food DP",
+          "jam_dp": "Jam alarm DP"
+        }
+      }
+    },
+    "error": {
+      "required": "Feed trigger DP is required"
+    }
+  },
+  "entity": {
+    "button": {
+      "feed_now": {
+        "name": "Feed now"
+      }
+    },
+    "sensor": {
+      "battery": {
+        "name": "Backup battery"
+      }
+    },
+    "binary_sensor": {
+      "feeding": {
+        "name": "Feeding"
+      },
+      "no_food": {
+        "name": "Out of food"
+      },
+      "jam": {
+        "name": "Jam"
+      }
+    },
+    "number": {
+      "portions": {
+        "name": "Portions per feed"
+      }
+    }
+  }
+}

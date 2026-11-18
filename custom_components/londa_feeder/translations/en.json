@@ -3,7 +3,11 @@
     "step": {
       "user": {
         "title": "Add feeder",
-        "description": "QR setup fetches the device IP and localKey automatically."
+        "description": "Recommended: reuse the Tuya account already authorized in Home Assistant. Or sign in by scanning a QR code.",
+        "menu_options": {
+          "account": "Use existing Tuya account (recommended)",
+          "qr": "Sign in by QR code"
+        }
       },
       "account": {
         "title": "Pick a device",

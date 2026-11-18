@@ -3,7 +3,11 @@
     "step": {
       "user": {
         "title": "添加喂食器",
-        "description": "扫码添加会自动获取设备 IP 与本地密钥，无需手填。"
+        "description": "推荐直接用 HA 里已有的涂鸦授权选设备；也可以用 Londa APP 扫码登录。",
+        "menu_options": {
+          "account": "使用已有涂鸦账号（推荐）",
+          "qr": "扫码登录"
+        }
       },
       "account": {
         "title": "选择设备",

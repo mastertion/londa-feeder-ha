@@ -246,7 +246,7 @@ class LondaFeederConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """选择添加方式。"""
         return self.async_show_menu(
             step_id="user",
-            menu_options=["account", "qr", "manual"],
+            menu_options=["account", "qr"],
         )
 
     # ---------- 直接用已有授权 ----------

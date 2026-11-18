@@ -104,9 +104,11 @@ rm -rf _tmp_londa
 把 `custom_components/londa_feeder` 整个文件夹复制到 HA 的 `/config/custom_components/` 下，重启 HA。
 （也可以用仓库根目录的 `londa_feeder.zip` 解压后放进去。）
 
-### 第 3 步 · 添加设备（扫码 / 手动二选一）
+### 第 3 步 · 添加设备（两种方式二选一）
 
 `设置 → 设备与服务 → 添加集成 → 搜索 LONDA Feeder`
+
+菜单只有两项：「使用已有涂鸦账号（推荐）」和「扫码登录」。
 
 #### 方式 A · 直接用已有授权选设备（最快，零输入）
 
@@ -124,7 +126,9 @@ rm -rf _tmp_londa
 3. 用 **Londa APP** 右上角「+ → 扫一扫」扫码并在手机上确认
 4. 回到 HA 点「提交」→ 列出设备 → 选喂食器 → 后续同上
 
-#### 方式 C · 手动填写
+#### 方式 C · 手动填写（界面上已隐藏，仅脚本/无头环境用）
+
+菜单里已去掉这一项（界面只保留上面两种）。`async_step_manual` 的实现仍保留，可通过 REST config flow 的 `next_step_id=manual` 调用，方便无头自动化建条目（例如仓库里 `tools/ha_create_entry.py`）。
 
 填 **IP / Device ID / Local Key**，协议版本保持 **自动探测**（会按 3.5 → 3.4 → 3.3 → 3.1 依次尝试，连上即锁定版本）。
 localKey 的取法见上面的第 1 步，或者直接从已有 Tuya 条目的授权里读（本集成本身不需要涂鸦开发者账号）。

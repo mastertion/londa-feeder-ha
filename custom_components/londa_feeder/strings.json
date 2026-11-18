@@ -11,7 +11,7 @@
       },
       "account": {
         "title": "选择设备",
-        "description": "使用 HA 里已有的涂鸦授权读取设备列表。若这里报错，改用「扫码添加」或「手动填写」。"
+        "description": "使用 HA 里已有的涂鸦授权读取设备列表。若这里报错，改用「扫码登录」。"
       },
       "qr": {
         "title": "输入 User Code",
@@ -54,7 +54,7 @@
       "qr_not_scanned": "还没读到扫码授权（{msg}）。请用 Londa APP 扫码并在手机上确认后，再点击提交",
       "cloud_error": "已授权但拉取设备列表失败，请查看日志后重试",
       "no_devices": "这个账号下没有设备，请先在 Londa APP 里添加喂食器",
-      "no_tuya_entry": "HA 里没有可用的涂鸦授权。请先添加官方 Tuya 集成，或改用「扫码添加」/「手动填写」",
+      "no_tuya_entry": "HA 里没有可用的涂鸦授权。请先添加官方 Tuya 集成，或改用「扫码登录」",
       "device_not_found": "局域网里没扫到这台设备。请确认设备和 HA 在同一网段、已连上 2.4G WiFi，然后重试",
       "unknown": "未知错误，详见日志",
       "required": "此项必填"
@@ -83,6 +83,9 @@
     "sensor": {
       "battery": {
         "name": "备用电池电量"
+      },
+      "last_feed": {
+        "name": "本次投喂份数"
       }
     },
     "binary_sensor": {

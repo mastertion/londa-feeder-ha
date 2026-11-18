@@ -96,6 +96,9 @@
     "sensor": {
       "battery": {
         "name": "Backup battery"
+      },
+      "last_feed": {
+        "name": "Last feed portions"
       }
     },
     "binary_sensor": {

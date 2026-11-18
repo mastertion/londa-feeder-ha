@@ -31,3 +31,19 @@ MIN_PORTIONS = 1
 MAX_PORTIONS = 12
 
 PROTOCOL_VERSIONS = [AUTO_VERSION, "3.5", "3.4", "3.3", "3.1"]
+
+# --- 已知机型的内置 DP 映射 ---
+# 涂鸦云对白牌产品不返回 DP 定义，只能靠实测结论。按 product_id 记住，
+# 识别到就是开箱即用，不用自己猜。
+KNOWN_PROFILES: dict[str, dict[str, object]] = {
+    # LONDA（艾隆达）入门级 WiFi 鱼缸喂食器
+    "dcxmtf1dv2chwmbw": {
+        CONF_FEED_DP: "6",          # 写 N = 投喂 N 份，随后归零
+        CONF_FEED_IS_BOOL: False,
+        CONF_FEEDING_DP: "1",       # 只读：投喂中（约 9 秒）
+        CONF_PORTION_DP: None,
+        CONF_BATTERY_DP: None,
+        CONF_NO_FOOD_DP: None,
+        CONF_JAM_DP: None,
+    },
+}

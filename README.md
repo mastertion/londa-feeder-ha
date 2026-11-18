@@ -152,9 +152,12 @@ localKey 的取法见上面的第 1 步，或者直接从已有 Tuya 条目的�
 |---|---|
 | `button.xxx_feed_now` | 立即投喂（按一次下发投喂命令） |
 | `binary_sensor.xxx_feeding` | 投喂中（设备上报，约亮 9 秒） |
+| `sensor.xxx_last_feed_portions` | **本次投喂份数**：最近一次实际出粮几份，附带 `last_feed_at`（时间）、`portions_per_feed`（设置值）、`feed_count`（累计次数） |
 | `number.xxx_portions_per_feed` | 每次投喂份数，1–12（只存 HA 侧，按按钮时才下发） |
 | `sensor.xxx_battery` | 备用电池电量 %（仅当指定了电池 DP） |
 | `binary_sensor.xxx_no_food` / `xxx_jam` | 缺粮 / 卡粮告警（仅当指定了对应 DP） |
+
+> 份数传感器在按下按钮时立即更新（不用等出粮那 6~25 秒）。HA 重启后显示 `unknown`，投喂一次就恢复。
 
 ### 喂食器常见 DP 参考
 
@@ -165,21 +168,21 @@ python tools/tuya_localkey.py --dump <device_id> --ip 192.168.1.50 --local-key <
 ```
 
 ```
-dp   code          value   type
-1    manual_feed   False   bool     ← 写 True 立即出粮
-2    feed_num      3       int      ← 份数
-3    battery       85      int      ← 备用电池
-4    food_lack     False   bool     ← 缺粮
-5    food_jam      False   bool     ← 卡粮
+dp   value   type   语义（本机型实测）
+1    False   bool   ← 只读：「投喂中」状态，出粮时 true 约 9 秒
+6    0       int    ← 可写：投喂命令，写 N 表示投喂 N 份，随后归零
 ```
 
-不确定哪个是投喂时，可以逐个试：
+`product_id` 为 `dcxmtf1dv2chwmbw` 的机型已内置映射（`const.py` 的 `KNOWN_PROFILES`），
+配置向导会自动预填 `投喂 DP = 6`、`投喂中 DP = 1`，直接提交即可。
+
+其它批次机型可以在向导里逐个试（写错不会损坏设备）：
 
 ```bash
 python tools/tuya_localkey.py --dump <device_id> --ip 192.168.1.50 --local-key <localKey> --try-feed 1
 ```
 
-设备立刻出粮，说明 DP 1 就是投喂触发。
+看设备是否出粮：出粮的那个 DP 就是投喂命令，随后归零的整数 DP 才是份数。
 
 ---
 

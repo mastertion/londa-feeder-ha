@@ -36,6 +36,7 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_PROTOCOL_VERSION,
     DOMAIN,
+    KNOWN_PROFILES,
     PROBE_VERSIONS,
     PROTOCOL_VERSIONS,
 )
@@ -60,6 +61,20 @@ DP_FIELDS = (
     CONF_NO_FOOD_DP,
     CONF_JAM_DP,
 )
+
+
+def _guess_feed(dps: dict[str, Any]) -> tuple[str | None, str | None]:
+    """猜投喂 DP：涂鸦这条线里"命令"通常是整型（写 N 份后归零），
+    "状态"才是布尔。所以优先取整型，布尔留给"投喂中"。"""
+    order = _sorted_dps(dps)
+    ints = [dp for dp in order
+            if isinstance(dps[dp], int) and not isinstance(dps[dp], bool)]
+    bools = [dp for dp in order if isinstance(dps[dp], bool)]
+    if ints:
+        return ints[0], (bools[0] if bools else None)
+    if bools:
+        return bools[0], None
+    return (order[0] if order else None), None
 
 
 def _sorted_dps(dps: dict[str, Any]) -> list[str]:
@@ -231,6 +246,7 @@ class LondaFeederConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._data: dict[str, Any] = {}
         self._dps: dict[str, Any] = {}
         self._user_code: str = ""
+        self._product_id: str = ""
         self._qr_token: str = ""
         self._login_info: dict[str, Any] = {}
         self._cloud_devices: list[dict[str, Any]] = []
@@ -407,6 +423,7 @@ class LondaFeederConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     await self.async_set_unique_id(device["id"].lower())
                     self._abort_if_unique_id_configured()
+                    self._product_id = device.get("product_id", "") or ""
 
                     dps, detected, err = await _probe_device(
                         self.hass,
@@ -551,13 +568,14 @@ class LondaFeederConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 title=self._data[CONF_NAME], data=self._data, options=opts
             )
 
-        guess = next(
-            (dp for dp in _sorted_dps(self._dps) if isinstance(self._dps[dp], bool)),
-            _sorted_dps(self._dps)[0],
-        )
+        guess, guess_feeding = _guess_feed(self._dps)
+        profile = KNOWN_PROFILES.get(self._product_id) or {}
         return self.async_show_form(
             step_id="dp_map",
-            data_schema=self._dp_schema(options, feed_default=guess),
+            data_schema=self._dp_schema(
+                options, feed_default=guess, profile=profile,
+                feeding_default=guess_feeding,
+            ),
             description_placeholders={"dump": _dump_text(self._dps)},
         )
 
@@ -565,17 +583,40 @@ class LondaFeederConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self,
         options: list[selector.SelectOptionDict],
         feed_default: str | None = None,
+        profile: dict[str, Any] | None = None,
+        feeding_default: str | None = None,
     ) -> vol.Schema:
+        profile = profile or {}
+        known = [o["value"] for o in options]
+
+        def _default(key: str, fallback: str = NONE_OPTION) -> str:
+            value = profile.get(key)
+            if value is None:
+                return fallback
+            value = str(value)
+            return value if value in known else fallback
+
         return vol.Schema(
             {
                 vol.Required(
                     CONF_FEED_DP, default=feed_default or options[0]["value"]
                 ): _dp_select(options, allow_none=False),
-                vol.Optional(CONF_PORTION_DP, default=NONE_OPTION): _dp_select(options),
-                vol.Optional(CONF_FEEDING_DP, default=NONE_OPTION): _dp_select(options),
-                vol.Optional(CONF_BATTERY_DP, default=NONE_OPTION): _dp_select(options),
-                vol.Optional(CONF_NO_FOOD_DP, default=NONE_OPTION): _dp_select(options),
-                vol.Optional(CONF_JAM_DP, default=NONE_OPTION): _dp_select(options),
+                vol.Optional(
+                    CONF_PORTION_DP, default=_default(CONF_PORTION_DP)
+                ): _dp_select(options),
+                vol.Optional(
+                    CONF_FEEDING_DP,
+                    default=_default(CONF_FEEDING_DP, feeding_default or NONE_OPTION),
+                ): _dp_select(options),
+                vol.Optional(
+                    CONF_BATTERY_DP, default=_default(CONF_BATTERY_DP)
+                ): _dp_select(options),
+                vol.Optional(
+                    CONF_NO_FOOD_DP, default=_default(CONF_NO_FOOD_DP)
+                ): _dp_select(options),
+                vol.Optional(
+                    CONF_JAM_DP, default=_default(CONF_JAM_DP)
+                ): _dp_select(options),
             }
         )
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from datetime import datetime, timezone
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -68,6 +69,12 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._attr_name = cfg.get(CONF_NAME, DEFAULT_NAME)
         self._entry = entry
 
+        # 投喂统计（用于「本次投喂份数」传感器）
+        self.last_feed_portions: int | None = None
+        self.last_feed_at: datetime | None = None
+        self.feed_count: int = 0
+        self._prev_feed_raw: Any = None
+
     # ------------------------------------------------------------------ #
     # DP 配置
     # ------------------------------------------------------------------ #
@@ -117,6 +124,8 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # ------------------------------------------------------------------ #
     # 刷新
     # ------------------------------------------------------------------ #
+    device_reachable: bool = False
+
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             data = await self.hass.async_add_executor_job(self.device.poll)
@@ -130,9 +139,48 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.device_reachable = True
         if not data:
             raise UpdateFailed("设备返回空状态")
+        self._track_feed_report(data)
         return data
 
-    device_reachable: bool = False
+    # ------------------------------------------------------------------ #
+    # 投喂份数统计
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def _is_active_feed(raw: Any) -> bool:
+        """DP 上报是否表示"这一次投喂携带了份数"。"""
+        if isinstance(raw, bool):
+            return raw
+        if isinstance(raw, (int, float)):
+            return raw > 0
+        return False
+
+    def _record_feed(self, portions: int) -> None:
+        self.last_feed_portions = max(0, int(portions))
+        self.last_feed_at = datetime.now(timezone.utc)
+        self.feed_count += 1
+        self.async_set_updated_data(self.data or {})
+
+    def _track_feed_report(self, data: dict[str, Any]) -> None:
+        """设备上报 DP6=N 后归零：抓到一次"出粮 N 份"。"""
+        if not self.feed_dp:
+            return
+        raw = data.get(str(self.feed_dp))
+        active = self._is_active_feed(raw)
+        prev_active = self._is_active_feed(self._prev_feed_raw)
+        self._prev_feed_raw = raw
+        if not active or prev_active:
+            return
+        portions = int(raw) if isinstance(raw, (int, float)) and not isinstance(raw, bool) else self.portions
+        # 命令下发时已经乐观记过一次，这里只补正份数、避免重复计数
+        if (
+            self.last_feed_portions is not None
+            and self.last_feed_at is not None
+            and (datetime.now(timezone.utc) - self.last_feed_at).total_seconds() < 120
+        ):
+            self.last_feed_portions = max(0, portions)
+            self.async_set_updated_data(self.data or {})
+            return
+        self._record_feed(portions)
 
     # ------------------------------------------------------------------ #
     # 动作
@@ -154,9 +202,14 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise LondaDeviceError("未配置投喂 DP")
 
         await self.hass.async_add_executor_job(self.device.set, values)
-        # 这台设备下发到真正出粮有 6~25 秒延迟，安排两次延后刷新把状态抓稳
-        self.hass.async_create_task(self._async_refresh_later(15.0))
-        self.hass.async_create_task(self._async_refresh_later(35.0))
+        # 立即乐观更新份数与次数，界面不用等出粮那 6~25 秒
+        self.last_feed_portions = int(portions)
+        self.last_feed_at = datetime.now(timezone.utc)
+        self.feed_count += 1
+        self.async_set_updated_data(self.data or {})
+        # 设备真正出粮有 6~25 秒延迟、"投喂中"只亮约 9 秒，多点采样才抓得稳
+        for delay in (8.0, 20.0, 40.0):
+            self.hass.async_create_task(self._async_refresh_later(delay))
 
     async def _async_refresh_later(self, delay: float = 15.0) -> None:
         import asyncio

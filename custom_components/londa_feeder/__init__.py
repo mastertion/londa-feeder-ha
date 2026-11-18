@@ -27,6 +27,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """建立一次集成实例。"""
     coordinator = LondaFeederCoordinator(hass, entry)
 
+    # 先把上次投喂记录读回来，再取设备快照
+    await coordinator.async_load_stats()
+
     try:
         await coordinator.async_config_entry_first_refresh()
     except (UpdateFailed, ConfigEntryNotReady) as err:

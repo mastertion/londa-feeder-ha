@@ -110,8 +110,25 @@ class _CV:
     string = str
 
 
+class _Store:
+    """最小化 Store 桩：内存里存一份，重启语义不生效。"""
+
+    def __init__(self, hass, version, key):
+        self.hass = hass
+        self.version = version
+        self.key = key
+        self._data = None
+
+    async def async_load(self):
+        return self._data
+
+    async def async_save(self, data):
+        self._data = data
+
+
 _MODULES = {
     "homeassistant": {},
+    "homeassistant.helpers.storage": dict(Store=_Store),
     "homeassistant.components": {},
     "homeassistant.config_entries": dict(
         ConfigEntry=_ConfigEntry, ConfigFlow=_ConfigFlow, OptionsFlow=_OptionsFlow

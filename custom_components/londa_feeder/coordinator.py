@@ -9,6 +9,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -31,6 +32,8 @@ from .const import (
     DOMAIN,
     MAX_PORTIONS,
     MIN_PORTIONS,
+    STORAGE_KEY,
+    STORAGE_VERSION,
 )
 from .device import LondaDevice, LondaDeviceError
 
@@ -74,6 +77,9 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.last_feed_at: datetime | None = None
         self.feed_count: int = 0
         self._prev_feed_raw: Any = None
+        self._store: Store = Store(
+            hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}.{STORAGE_KEY}"
+        )
 
     # ------------------------------------------------------------------ #
     # DP 配置
@@ -158,7 +164,49 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.last_feed_portions = max(0, int(portions))
         self.last_feed_at = datetime.now(timezone.utc)
         self.feed_count += 1
+        self._schedule_save()
         self.async_set_updated_data(self.data or {})
+
+    # ------------------------------------------------------------------ #
+    # 持久化：重启后仍能看到上次投喂份数与累计次数
+    # ------------------------------------------------------------------ #
+    async def async_load_stats(self) -> None:
+        """从 .storage 恢复上次投喂记录。"""
+        try:
+            stored = await self._store.async_load()
+        except Exception as err:  # noqa: BLE001 - 读失败不影响主流程
+            _LOGGER.debug("读取投喂统计失败: %s", err)
+            return
+        if not isinstance(stored, dict):
+            return
+        portions = stored.get("last_feed_portions")
+        if isinstance(portions, (int, float)) and not isinstance(portions, bool):
+            self.last_feed_portions = int(portions)
+        stamp = stored.get("last_feed_at")
+        if isinstance(stamp, str) and stamp:
+            try:
+                self.last_feed_at = datetime.fromisoformat(stamp)
+            except ValueError:
+                _LOGGER.debug("投喂时间 %r 无法解析", stamp)
+        count = stored.get("feed_count")
+        if isinstance(count, (int, float)) and not isinstance(count, bool):
+            self.feed_count = int(count)
+
+    def _schedule_save(self) -> None:
+        self.hass.async_create_task(self._async_save_stats())
+
+    async def _async_save_stats(self) -> None:
+        payload = {
+            "last_feed_portions": self.last_feed_portions,
+            "last_feed_at": (
+                self.last_feed_at.isoformat() if self.last_feed_at else None
+            ),
+            "feed_count": self.feed_count,
+        }
+        try:
+            await self._store.async_save(payload)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.debug("保存投喂统计失败: %s", err)
 
     def _track_feed_report(self, data: dict[str, Any]) -> None:
         """设备上报 DP6=N 后归零：抓到一次"出粮 N 份"。"""
@@ -178,6 +226,7 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             and (datetime.now(timezone.utc) - self.last_feed_at).total_seconds() < 120
         ):
             self.last_feed_portions = max(0, portions)
+            self._schedule_save()
             self.async_set_updated_data(self.data or {})
             return
         self._record_feed(portions)
@@ -206,6 +255,7 @@ class LondaFeederCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.last_feed_portions = int(portions)
         self.last_feed_at = datetime.now(timezone.utc)
         self.feed_count += 1
+        self._schedule_save()
         self.async_set_updated_data(self.data or {})
         # 设备真正出粮有 6~25 秒延迟、"投喂中"只亮约 9 秒，多点采样才抓得稳
         for delay in (8.0, 20.0, 40.0):

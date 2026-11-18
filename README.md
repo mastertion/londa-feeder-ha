@@ -157,7 +157,7 @@ localKey 的取法见上面的第 1 步，或者直接从已有 Tuya 条目的�
 | `sensor.xxx_battery` | 备用电池电量 %（仅当指定了电池 DP） |
 | `binary_sensor.xxx_no_food` / `xxx_jam` | 缺粮 / 卡粮告警（仅当指定了对应 DP） |
 
-> 份数传感器在按下按钮时立即更新（不用等出粮那 6~25 秒）。HA 重启后显示 `unknown`，投喂一次就恢复。
+> 按下按钮时份数立即更新（不用等出粮那 6~25 秒）。数据会存进 `.storage`（`londa_feeder.<entry_id>.feed_stats`），**HA 重启后份数、投喂时间、累计次数都保留**；从未投喂过时才显示 `unknown`。
 
 ### 喂食器常见 DP 参考
 

@@ -32,6 +32,10 @@ MAX_PORTIONS = 12
 
 PROTOCOL_VERSIONS = [AUTO_VERSION, "3.5", "3.4", "3.3", "3.1"]
 
+# --- 持久化（投喂统计） ---
+STORAGE_VERSION = 1
+STORAGE_KEY = "feed_stats"
+
 # --- 已知机型的内置 DP 映射 ---
 # 涂鸦云对白牌产品不返回 DP 定义，只能靠实测结论。按 product_id 记住，
 # 识别到就是开箱即用，不用自己猜。

@@ -134,6 +134,14 @@ localKey 的取法见上面的第 1 步，或者直接从已有 Tuya 条目的�
 
 ---
 
+## 升级
+
+- **HACS 安装的**：HACS → 集成 → LONDA Feeder → 更新，然后重启 HA。
+- **git clone 安装的**：在 clone 目录 `git pull`，再把 `custom_components/londa_feeder` 覆盖回 `/config/custom_components/`。
+- **手动覆盖目录的**：整目录替换后重启 HA。若重启后发现条目不见了（极少见），重新「添加集成」即可——用「使用已有涂鸦账号」能一键选回同一台设备，不用重新输入 key。
+
+---
+
 ## 设备实体
 
 | 实体 | 说明 |
